@@ -5,8 +5,6 @@ from collections import Counter
 from time import monotonic
 from typing import Any
 
-from openai import OpenAI
-
 from app.services.ai_recommender import AICandidate, rerank_with_openai
 from app.services.data_loader import DataStore
 from app.services.trajectory import effective_skills, target_profile
@@ -144,7 +142,7 @@ def deterministic_recommendations(store: DataStore, employee: dict[str, Any], *,
     return [candidate.response for candidate in rank_candidates(store, employee, limit=limit)]
 
 
-def recommendations(store: DataStore, employee: dict[str, Any], *, ai_client: OpenAI | None = None) -> list[dict[str, Any]]:
+def recommendations(store: DataStore, employee: dict[str, Any], *, ai_client: Any | None = None) -> list[dict[str, Any]]:
     started = monotonic()
     candidates = rank_candidates(store, employee, limit=8)
     fallback = [candidate.response for candidate in candidates[:3]]

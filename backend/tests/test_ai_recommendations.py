@@ -6,11 +6,10 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
-from openai import APIConnectionError, APITimeoutError, OpenAIError
 
 from app.core.config import settings
 from app.services import ai_recommender
-from app.services.ai_recommender import AIRanking
+from app.services.ai_recommender import AIRanking, APIConnectionError, APITimeoutError, OpenAIError
 from app.services.data_loader import DataStore
 from app.services.recommender import (
     deterministic_recommendations,
@@ -116,6 +115,7 @@ def test_local_engine_returns_explainable_recommendations_for_real_employees(
     assert result == deterministic_recommendations(store, employee)
 
 
+@pytest.mark.skipif(not ai_recommender.OPENAI_AVAILABLE, reason="Optional OpenAI SDK is not installed")
 def test_successful_openai_response_uses_responses_api_and_keeps_public_shape(
     monkeypatch: pytest.MonkeyPatch, store: DataStore, employee: dict[str, Any]
 ) -> None:
@@ -131,6 +131,7 @@ def test_successful_openai_response_uses_responses_api_and_keeps_public_shape(
     assert len(json.loads(calls[0]["input"])["candidates"]) <= 8
 
 
+@pytest.mark.skipif(not ai_recommender.OPENAI_AVAILABLE, reason="Optional OpenAI SDK is not installed")
 @pytest.mark.parametrize("mutation", [
     lambda selected: selected[0].update(eventId="EV_999"),
     lambda selected: selected[1].update(eventId=selected[0]["eventId"]),
@@ -147,6 +148,7 @@ def test_invalid_openai_response_uses_fallback(
     assert recommendations(store, employee, ai_client=client) == expected  # type: ignore[arg-type]
 
 
+@pytest.mark.skipif(not ai_recommender.OPENAI_AVAILABLE, reason="Optional OpenAI SDK is not installed")
 def test_openai_error_uses_deterministic_fallback(
     monkeypatch: pytest.MonkeyPatch, store: DataStore, employee: dict[str, Any]
 ) -> None:
@@ -157,6 +159,7 @@ def test_openai_error_uses_deterministic_fallback(
     )
 
 
+@pytest.mark.skipif(not ai_recommender.OPENAI_AVAILABLE, reason="Optional OpenAI SDK is not installed")
 def test_openai_timeout_does_not_retry_and_uses_fallback(
     monkeypatch: pytest.MonkeyPatch, store: DataStore, employee: dict[str, Any]
 ) -> None:
@@ -169,6 +172,7 @@ def test_openai_timeout_does_not_retry_and_uses_fallback(
     assert len(calls) == 1
 
 
+@pytest.mark.skipif(not ai_recommender.OPENAI_AVAILABLE, reason="Optional OpenAI SDK is not installed")
 def test_openai_network_error_retries_once_then_uses_fallback(
     monkeypatch: pytest.MonkeyPatch, store: DataStore, employee: dict[str, Any]
 ) -> None:
@@ -181,6 +185,7 @@ def test_openai_network_error_retries_once_then_uses_fallback(
     assert len(calls) == 2
 
 
+@pytest.mark.skipif(not ai_recommender.OPENAI_AVAILABLE, reason="Optional OpenAI SDK is not installed")
 def test_repeated_request_uses_openai_cache(
     monkeypatch: pytest.MonkeyPatch, store: DataStore, employee: dict[str, Any]
 ) -> None:
