@@ -2,13 +2,15 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, File, Request, UploadFile
 
 from app.schemas.employee import ActivityHistoryEntry, Employee, Trajectory
 from app.schemas.hr import HRDashboard
+from app.schemas.import_data import ImportResult
 from app.schemas.recommendation import CompletionResult, Recommendation
 from app.services.data_loader import DataStore
 from app.services.hr_analytics import hr_dashboard
+from app.services.importer import ImportValidationError, prepare_import
 from app.services.recommender import is_eligible, recommendations
 from app.services.trajectory import effective_skills, target_profile, trajectory
 
@@ -29,7 +31,7 @@ def _store(request: Request) -> DataStore:
 
 
 def _employee_or_404(store: DataStore, employee_id: str) -> dict[str, Any]:
-    employee = store.employees.get(employee_id)
+    employee = store.get_employee(employee_id)
     if not employee:
         raise APIError(404, "EMPLOYEE_NOT_FOUND", f"Employee {employee_id} was not found")
     return employee
@@ -79,7 +81,7 @@ def _employee_response(store: DataStore, employee: dict[str, Any]) -> dict[str, 
 @router.get("/employees", response_model=list[Employee], response_model_by_alias=True)
 def get_employees(request: Request) -> list[dict[str, Any]]:
     store = _store(request)
-    return [_employee_response(store, employee) for employee in store.employees.values()]
+    return [_employee_response(store, employee) for employee in store.all_employees().values()]
 
 
 @router.get("/employees/{employee_id}", response_model=Employee, response_model_by_alias=True)
@@ -174,3 +176,31 @@ async def complete_recommendation(recommendation_id: str, request: Request) -> d
 @router.get("/hr-dashboard", response_model=HRDashboard, response_model_by_alias=True, include_in_schema=False)
 def get_hr_dashboard(request: Request) -> dict[str, Any]:
     return hr_dashboard(_store(request))
+
+
+@router.post("/import", response_model=ImportResult, response_model_by_alias=True)
+async def import_dataset(
+    request: Request,
+    employees: UploadFile = File(...),
+    activity_history: UploadFile = File(...),
+) -> dict[str, int]:
+    store = _store(request)
+    employees_filename = employees.filename or "employees.json"
+    history_filename = activity_history.filename or "activity_history.csv"
+    try:
+        prepared = prepare_import(
+            store,
+            await employees.read(),
+            employees_filename,
+            await activity_history.read(),
+            history_filename,
+        )
+    except ImportValidationError as exc:
+        raise APIError(422, exc.code, exc.message, exc.details) from exc
+
+    store.apply_import(prepared.employees, prepared.history)
+    return {
+        "employeesImported": len(prepared.employees),
+        "historyRecordsImported": len(prepared.history),
+        "totalEmployees": len(store.all_employees()),
+    }

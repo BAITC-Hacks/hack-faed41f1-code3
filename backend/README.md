@@ -40,6 +40,7 @@ py -3.12 -m venv .venv
 - `GET /api/employees/{employee_id}/recommendations`
 - `POST /api/employees/{employee_id}/complete/{event_id}`
 - `GET /api/hr/dashboard`
+- `POST /api/import` — multipart-поля `employees` и `activity_history`
 
 Для совместимости с текущим frontend также доступны
 `GET /api/employees/{employee_id}/activities`,

@@ -12,7 +12,7 @@ from app.services.trajectory import effective_skills, target_profile
 def hr_dashboard(store: DataStore) -> dict[str, Any]:
     gap_counts: Counter[str] = Counter()
     without_recommendations = []
-    for employee in store.employees.values():
+    for employee in store.all_employees().values():
         levels = effective_skills(store, employee)
         profile = target_profile(store, employee)
         for skill_id, required in profile["required_skills"].items():
@@ -76,5 +76,5 @@ def hr_dashboard(store: DataStore) -> dict[str, Any]:
             "overdue": statuses["overdue"],
         },
         "participationByActivity": participation[:8],
-        "totalEmployees": len(store.employees),
+        "totalEmployees": len(store.all_employees()),
     }

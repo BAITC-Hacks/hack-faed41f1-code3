@@ -1,5 +1,12 @@
 import { ApiError } from "@/lib/types"
-import type { ActivityFormat, ActivityHistoryEntry, Employee, HRDashboardData, Recommendation } from "@/lib/types"
+import type {
+  ActivityFormat,
+  ActivityHistoryEntry,
+  Employee,
+  HRDashboardData,
+  ImportResult,
+  Recommendation,
+} from "@/lib/types"
 
 const REQUEST_TIMEOUT_MS = 10_000
 
@@ -19,14 +26,15 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const controller = new AbortController()
   const timeout = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
   let response: Response
+  const headers = new Headers(init?.headers)
+  if (!(init?.body instanceof FormData) && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json")
+  }
   try {
     response = await fetch(resolvePath(path), {
       ...init,
       signal: controller.signal,
-      headers: {
-        "Content-Type": "application/json",
-        ...init?.headers,
-      },
+      headers,
     })
   } catch {
     throw new ApiError("Не удалось подключиться к Career Quest API")
@@ -36,13 +44,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!response.ok) {
     let message = `Ошибка сервера (${response.status})`
+    let code: string | undefined
+    let details: unknown
     try {
       const body = await response.json()
       if (body?.error?.message) message = body.error.message
+      if (body?.error?.code) code = body.error.code
+      details = body?.error?.details
     } catch {
       // Keep the status-based fallback when the backend response is not JSON.
     }
-    throw new ApiError(message, response.status)
+    throw new ApiError(message, response.status, code, details)
   }
 
   return (await response.json()) as T
@@ -70,6 +82,13 @@ export function getRecommendations(employeeId: string): Promise<Recommendation[]
 
 export function getHRDashboard(): Promise<HRDashboardData> {
   return request<HRDashboardData>("/hr-dashboard")
+}
+
+export function importCareerQuestData(employees: File, activityHistory: File): Promise<ImportResult> {
+  const body = new FormData()
+  body.append("employees", employees)
+  body.append("activity_history", activityHistory)
+  return request<ImportResult>("/import", { method: "POST", body })
 }
 
 export interface CompleteActivityInput {

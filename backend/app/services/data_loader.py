@@ -34,6 +34,8 @@ class DataStore:
     skills: dict[str, dict[str, Any]]
     role_profiles: dict[tuple[str, str], dict[str, Any]]
     history: list[dict[str, Any]]
+    imported_employees: dict[str, dict[str, Any]] = field(default_factory=dict)
+    imported_history: list[dict[str, Any]] = field(default_factory=list)
     runtime_history: list[dict[str, Any]] = field(default_factory=list)
 
     @classmethod
@@ -111,7 +113,24 @@ class DataStore:
                 raise DatasetValidationError(f"Unknown skill_id {skill_id!r} in {owner}")
 
     def all_history(self) -> list[dict[str, Any]]:
-        return [*self.history, *self.runtime_history]
+        return [*self.history, *self.imported_history, *self.runtime_history]
+
+    def all_employees(self) -> dict[str, dict[str, Any]]:
+        return {**self.employees, **self.imported_employees}
+
+    def get_employee(self, employee_id: str) -> dict[str, Any] | None:
+        return self.imported_employees.get(employee_id) or self.employees.get(employee_id)
+
+    def apply_import(
+        self,
+        employees: list[dict[str, Any]],
+        history: list[dict[str, Any]],
+    ) -> None:
+        self.imported_employees = {
+            **self.imported_employees,
+            **{employee["employee_id"]: employee for employee in employees},
+        }
+        self.imported_history = [*self.imported_history, *history]
 
     def add_completion(self, employee_id: str, event_id: str) -> None:
         self.runtime_history.append(

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Briefcase, LayoutDashboard, Sparkles, UserRound } from "lucide-react"
+import { Briefcase, FileUp, LayoutDashboard, Sparkles, UserRound } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useEmployeeContext } from "@/lib/employee-context"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -12,12 +12,13 @@ const NAV_ITEMS = [
   { href: "/profile", label: "Профиль сотрудника", icon: UserRound },
   { href: "/recommendations", label: "Рекомендации", icon: Sparkles },
   { href: "/hr-dashboard", label: "HR-панель", icon: LayoutDashboard },
+  { href: "/import", label: "Импорт", icon: FileUp },
 ] as const
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const { employees, selectedEmployeeId, selectEmployee, isLoading } = useEmployeeContext()
-  const showEmployeeSwitcher = pathname !== "/hr-dashboard"
+  const showEmployeeSwitcher = pathname !== "/hr-dashboard" && pathname !== "/import"
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">
