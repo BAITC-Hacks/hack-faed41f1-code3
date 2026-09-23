@@ -21,6 +21,7 @@ class EmployeeWithoutRecommendation(BaseModel):
 class StatusBreakdown(BaseModel):
     completed: int
     dropout: int
+    dropped: int
     declined: int
     no_show: int = Field(alias="noShow")
     in_progress: int = Field(alias="inProgress")
