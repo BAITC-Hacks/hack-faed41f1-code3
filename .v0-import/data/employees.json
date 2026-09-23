@@ -1,0 +1,153 @@
+[
+  {
+    "id": "emp-001",
+    "fullName": "Иванова Анна Сергеевна",
+    "role": "Специалист по обслуживанию клиентов",
+    "department": "Розничный бизнес",
+    "avatarInitials": "АИ",
+    "grade": {
+      "current": "Специалист",
+      "target": "Ведущий специалист",
+      "targetDeadline": "2026-12-15",
+      "goal": "Перейти на грейд «Ведущий специалист» и возглавить направление клиентского сервиса в отделении"
+    },
+    "skills": [
+      { "id": "sk-1", "name": "Клиентоориентированные продажи", "category": "soft", "currentLevel": 3, "requiredLevel": 4, "critical": true },
+      { "id": "sk-2", "name": "Работа с возражениями", "category": "soft", "currentLevel": 2, "requiredLevel": 4, "critical": true },
+      { "id": "sk-3", "name": "Продуктовая линейка банка", "category": "hard", "currentLevel": 4, "requiredLevel": 4, "critical": false },
+      { "id": "sk-4", "name": "CRM-системы", "category": "digital", "currentLevel": 2, "requiredLevel": 3, "critical": false },
+      { "id": "sk-5", "name": "Наставничество", "category": "leadership", "currentLevel": 1, "requiredLevel": 3, "critical": false }
+    ]
+  },
+  {
+    "id": "emp-002",
+    "fullName": "Смирнов Дмитрий Олегович",
+    "role": "Кредитный аналитик",
+    "department": "Корпоративный бизнес",
+    "avatarInitials": "ДС",
+    "grade": {
+      "current": "Ведущий специалист",
+      "target": "Старший специалист",
+      "targetDeadline": "2027-03-01",
+      "goal": "Освоить финансовое моделирование корпоративных заёмщиков и получить грейд «Старший специалист»"
+    },
+    "skills": [
+      { "id": "sk-6", "name": "Финансовое моделирование", "category": "hard", "currentLevel": 2, "requiredLevel": 4, "critical": true },
+      { "id": "sk-7", "name": "Анализ кредитных рисков", "category": "hard", "currentLevel": 3, "requiredLevel": 4, "critical": true },
+      { "id": "sk-8", "name": "Python для анализа данных", "category": "digital", "currentLevel": 1, "requiredLevel": 3, "critical": false },
+      { "id": "sk-9", "name": "Презентация решений комитету", "category": "soft", "currentLevel": 2, "requiredLevel": 3, "critical": false }
+    ]
+  },
+  {
+    "id": "emp-003",
+    "fullName": "Кузнецова Мария Игоревна",
+    "role": "Риск-менеджер",
+    "department": "Управление рисками",
+    "avatarInitials": "МК",
+    "grade": {
+      "current": "Старший специалист",
+      "target": "Эксперт",
+      "targetDeadline": "2027-06-01",
+      "goal": "Возглавить методологию оценки операционных рисков на грейде «Эксперт»"
+    },
+    "skills": [
+      { "id": "sk-10", "name": "Стресс-тестирование портфеля", "category": "hard", "currentLevel": 3, "requiredLevel": 5, "critical": true },
+      { "id": "sk-11", "name": "Нормативы Банка России", "category": "hard", "currentLevel": 4, "requiredLevel": 5, "critical": false },
+      { "id": "sk-12", "name": "Data Storytelling", "category": "digital", "currentLevel": 2, "requiredLevel": 4, "critical": true },
+      { "id": "sk-13", "name": "Управление проектами", "category": "leadership", "currentLevel": 3, "requiredLevel": 4, "critical": false }
+    ]
+  },
+  {
+    "id": "emp-004",
+    "fullName": "Петров Алексей Викторович",
+    "role": "IT-специалист",
+    "department": "Информационные технологии",
+    "avatarInitials": "АП",
+    "grade": {
+      "current": "Специалист",
+      "target": "Ведущий специалист",
+      "targetDeadline": "2027-01-20",
+      "goal": "Перейти в команду сопровождения ДБО как ведущий специалист"
+    },
+    "skills": [
+      { "id": "sk-14", "name": "Кибербезопасность", "category": "digital", "currentLevel": 2, "requiredLevel": 4, "critical": true },
+      { "id": "sk-15", "name": "Agile-практики", "category": "soft", "currentLevel": 3, "requiredLevel": 3, "critical": false },
+      { "id": "sk-16", "name": "Архитектура банковских систем", "category": "hard", "currentLevel": 2, "requiredLevel": 4, "critical": true },
+      { "id": "sk-17", "name": "Документирование требований", "category": "hard", "currentLevel": 3, "requiredLevel": 3, "critical": false }
+    ]
+  },
+  {
+    "id": "emp-005",
+    "fullName": "Новикова Екатерина Павловна",
+    "role": "HR-партнер",
+    "department": "Управление персоналом",
+    "avatarInitials": "ЕН",
+    "grade": {
+      "current": "Ведущий специалист",
+      "target": "Старший специалист",
+      "targetDeadline": "2027-02-10",
+      "goal": "Развить компетенции в кадровой аналитике и перейти на грейд «Старший специалист»"
+    },
+    "skills": [
+      { "id": "sk-18", "name": "Кадровая аналитика", "category": "digital", "currentLevel": 1, "requiredLevel": 3, "critical": true },
+      { "id": "sk-19", "name": "Проведение сложных интервью", "category": "soft", "currentLevel": 4, "requiredLevel": 4, "critical": false },
+      { "id": "sk-20", "name": "Управление кадровым резервом", "category": "leadership", "currentLevel": 2, "requiredLevel": 4, "critical": true }
+    ]
+  },
+  {
+    "id": "emp-006",
+    "fullName": "Соколов Игорь Николаевич",
+    "role": "Менеджер по продажам",
+    "department": "Розничный бизнес",
+    "avatarInitials": "ИС",
+    "grade": {
+      "current": "Старший специалист",
+      "target": "Эксперт",
+      "targetDeadline": "2027-04-15",
+      "goal": "Возглавить группу продаж отделения на грейде «Эксперт»"
+    },
+    "skills": [
+      { "id": "sk-21", "name": "Управление командой", "category": "leadership", "currentLevel": 2, "requiredLevel": 4, "critical": true },
+      { "id": "sk-22", "name": "Сложные переговоры", "category": "soft", "currentLevel": 3, "requiredLevel": 4, "critical": false },
+      { "id": "sk-23", "name": "Продуктовая линейка банка", "category": "hard", "currentLevel": 4, "requiredLevel": 4, "critical": false },
+      { "id": "sk-24", "name": "Аналитика продаж", "category": "digital", "currentLevel": 2, "requiredLevel": 3, "critical": false }
+    ]
+  },
+  {
+    "id": "emp-007",
+    "fullName": "Волкова Ольга Дмитриевна",
+    "role": "Специалист по комплаенс",
+    "department": "Комплаенс",
+    "avatarInitials": "ОВ",
+    "grade": {
+      "current": "Специалист",
+      "target": "Ведущий специалист",
+      "targetDeadline": "2027-05-01",
+      "goal": "Расширить экспертизу по антифрод-процедурам и перейти на грейд «Ведущий специалист»"
+    },
+    "skills": [
+      { "id": "sk-25", "name": "Требования 115-ФЗ", "category": "hard", "currentLevel": 3, "requiredLevel": 4, "critical": true },
+      { "id": "sk-26", "name": "Антифрод-мониторинг", "category": "hard", "currentLevel": 2, "requiredLevel": 4, "critical": true },
+      { "id": "sk-27", "name": "Работа с расследованиями", "category": "soft", "currentLevel": 3, "requiredLevel": 3, "critical": false }
+    ]
+  },
+  {
+    "id": "emp-008",
+    "fullName": "Морозов Артём Сергеевич",
+    "role": "Аналитик данных",
+    "department": "Цифровые продукты",
+    "avatarInitials": "АМ",
+    "grade": {
+      "current": "Ведущий специалист",
+      "target": "Старший специалист",
+      "targetDeadline": "2027-03-20",
+      "goal": "Освоить продуктовую аналитику и перейти на грейд «Старший специалист»"
+    },
+    "skills": [
+      { "id": "sk-28", "name": "SQL и витрины данных", "category": "digital", "currentLevel": 4, "requiredLevel": 4, "critical": false },
+      { "id": "sk-29", "name": "Продуктовая аналитика", "category": "hard", "currentLevel": 2, "requiredLevel": 4, "critical": true },
+      { "id": "sk-30", "name": "Data Storytelling", "category": "digital", "currentLevel": 2, "requiredLevel": 3, "critical": false },
+      { "id": "sk-31", "name": "Презентация решений комитету", "category": "soft", "currentLevel": 3, "requiredLevel": 3, "critical": false }
+    ]
+  }
+]

@@ -1,0 +1,34 @@
+employee_id,activity_id,activity_name,date,status,format,duration_hours
+emp-001,act-101,Клиентоориентированные продажи,2026-08-12,completed,offline,16
+emp-001,act-102,Работа с возражениями: продвинутый уровень,2026-09-02,in_progress,online,8
+emp-001,act-103,Наставничество для новых сотрудников,2026-06-20,no_show,offline,6
+emp-001,act-104,Основы CRM для розничного бизнеса,2026-05-10,completed,online,4
+emp-002,act-201,Финансовое моделирование для аналитиков,2026-07-18,completed,offline,24
+emp-002,act-202,Python для банковских аналитиков,2026-09-05,in_progress,online,20
+emp-002,act-203,Анализ кредитных рисков корпоративных клиентов,2026-04-14,completed,offline,16
+emp-002,act-204,Презентация решений кредитному комитету,2026-08-29,dropout,online,6
+emp-003,act-301,Стресс-тестирование кредитного портфеля,2026-06-11,completed,offline,20
+emp-003,act-302,Data Storytelling для риск-аналитиков,2026-09-08,in_progress,online,12
+emp-003,act-303,Управление проектами в банке,2026-03-22,completed,offline,16
+emp-003,act-304,Актуальные нормативы Банка России,2026-07-30,completed,online,8
+emp-004,act-401,Кибербезопасность для сотрудников банка,2026-08-01,dropout,online,6
+emp-004,act-402,Архитектура банковских ИТ-систем,2026-05-19,completed,offline,24
+emp-004,act-403,Agile для банковских команд,2026-09-10,in_progress,mixed,12
+emp-005,act-501,Кадровая аналитика на практике,2026-07-04,no_show,online,10
+emp-005,act-502,Управление кадровым резервом,2026-04-28,completed,offline,16
+emp-005,act-503,Проведение сложных интервью,2026-02-15,completed,offline,8
+emp-006,act-601,Лидерство нового уровня,2026-08-20,in_progress,offline,24
+emp-006,act-602,Сложные переговоры с клиентами,2026-06-02,completed,offline,12
+emp-006,act-603,Аналитика продаж для менеджеров,2026-09-01,dropout,online,8
+emp-007,act-701,Требования 115-ФЗ: обновление 2026,2026-08-15,completed,online,6
+emp-007,act-702,Антифрод-мониторинг транзакций,2026-09-12,in_progress,online,14
+emp-007,act-703,Работа с расследованиями инцидентов,2026-05-06,no_show,offline,10
+emp-008,act-801,Продуктовая аналитика для цифровых команд,2026-07-22,completed,offline,20
+emp-008,act-802,Data Storytelling для продуктовых аналитиков,2026-09-06,in_progress,online,12
+emp-008,act-803,SQL для витрин данных: продвинутый уровень,2026-03-11,completed,online,10
+emp-001,act-105,Продуктовая линейка банка: обновление,2026-02-04,completed,online,4
+emp-002,act-205,Основы риск-менеджмента,2026-01-16,completed,offline,12
+emp-003,act-305,Agile для банковских команд,2026-08-04,dropout,mixed,12
+emp-004,act-404,Основы Python для аналитиков,2026-01-29,completed,online,16
+emp-006,act-604,Продуктовая линейка банка: обновление,2026-02-18,completed,online,4
+emp-008,act-804,Управление проектами в банке,2026-06-25,no_show,offline,16
