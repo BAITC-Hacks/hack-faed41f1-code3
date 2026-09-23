@@ -64,7 +64,7 @@ AI-слой отвечает за:
 
 ### AI layer
 
-Провайдер: NVIDIA hosted NIM API.
+Провайдер: OpenAI Responses API со structured output.
 
 AI получает только:
 
@@ -234,7 +234,7 @@ Endpoint импорта принимает:
 ## Безопасность и приватность
 
 - API-ключи хранятся только в переменных окружения backend.
-- Frontend не обращается к NVIDIA напрямую.
+- Frontend не обращается к OpenAI напрямую.
 - Employee view показывает данные только выбранного сотрудника.
 - HR view показывает агрегаты и служебную информацию.
 - Реальные персональные данные не используются.
@@ -253,7 +253,7 @@ Endpoint импорта принимает:
 
 - Railway CLI;
 - Dockerfile;
-- переменные `NVIDIA_API_KEY`, `NVIDIA_MODEL` и `FRONTEND_URL`.
+- переменные `OPENAI_API_KEY`, `OPENAI_MODEL` и `FRONTEND_URL`.
 
 ## Отказоустойчивость
 

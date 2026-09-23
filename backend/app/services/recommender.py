@@ -5,9 +5,9 @@ from collections import Counter
 from time import monotonic
 from typing import Any
 
-import httpx
+from openai import OpenAI
 
-from app.services.ai_recommender import AICandidate, rerank_with_nvidia
+from app.services.ai_recommender import AICandidate, rerank_with_openai
 from app.services.data_loader import DataStore
 from app.services.trajectory import effective_skills, target_profile
 
@@ -144,14 +144,14 @@ def deterministic_recommendations(store: DataStore, employee: dict[str, Any], *,
     return [candidate.response for candidate in rank_candidates(store, employee, limit=limit)]
 
 
-def recommendations(store: DataStore, employee: dict[str, Any], *, ai_client: httpx.Client | None = None) -> list[dict[str, Any]]:
+def recommendations(store: DataStore, employee: dict[str, Any], *, ai_client: OpenAI | None = None) -> list[dict[str, Any]]:
     started = monotonic()
     candidates = rank_candidates(store, employee, limit=8)
     fallback = [candidate.response for candidate in candidates[:3]]
     if len(candidates) < 3:
         logger.info("recommendation_source=deterministic reason=fewer_than_three_candidates employee_id=%s candidates=%d latency_ms=%d", employee["employee_id"], len(candidates), round((monotonic()-started)*1000))
         return fallback
-    outcome = rerank_with_nvidia(employee["employee_id"], candidates, client=ai_client)
+    outcome = rerank_with_openai(employee["employee_id"], candidates, client=ai_client)
     if outcome.result is not None:
         logger.info("recommendation_source=%s result=success employee_id=%s candidates=%d latency_ms=%d", outcome.source, employee["employee_id"], len(candidates), round((monotonic()-started)*1000))
     else:

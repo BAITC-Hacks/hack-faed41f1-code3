@@ -30,15 +30,16 @@ py -3.12 -m venv .venv
 Rule-based scoring — основа решения: он локально отбирает и ранжирует top 8 по
 effective skills, skill gaps, critical skills, career goal, prerequisites,
 доступности, истории участия и `gain`/`max_level`. Каждая рекомендация содержит
-подтверждённые объяснимые факторы. NVIDIA NIM — только необязательное расширение,
-которое может выбрать порядок deterministic top 3. Eligibility, score, gaps, evidence и все
-тексты факторов рассчитывает только backend. В NIM передаются только event ID,
+подтверждённые объяснимые факторы. OpenAI Responses API — только необязательное расширение,
+которое может выбрать до трёх событий из deterministic top 8. Eligibility, score, gaps, evidence и все
+тексты факторов рассчитывает только backend. В OpenAI передаются только event ID,
 название, score и подтверждённые evidence ID/facts — без профиля сотрудника,
 истории, персональных данных и ключа. Ответ проходит строгую Pydantic-валидацию;
 LLM не может создать событие или факт.
 
-Создайте `backend/.env` по шаблону `.env.example` и укажите ключ NVIDIA. Значения
-операционной системы имеют приоритет. При отсутствии ключа, timeout, сетевой/HTTP
+Создайте `backend/.env` по шаблону `.env.example` и задайте `OPENAI_API_KEY` и
+`OPENAI_MODEL`. Значения операционной системы имеют приоритет. При отсутствии ключа
+или модели, timeout, сетевой/API
 ошибке или невалидном ответе используется deterministic top 3. Успешные ответы
 кэшируются в памяти по сотруднику, модели и fingerprint top-8; повторный запрос
 даёт безопасный лог `recommendation_source=cache result=success`.
@@ -46,12 +47,12 @@ LLM не может создать событие или факт.
 Ручная проверка (не запускайте без ключа):
 
 ```powershell
-.\.venv\Scripts\python.exe scripts/check_nvidia.py
+.\.venv\Scripts\python.exe scripts/check_openai.py
 ```
 
 После успешной проверки запустите backend, вызовите recommendations для сотрудника
-и проверьте `recommendation_source=nvidia result=success` в логе. Повторите тот же
-запрос: ожидается `recommendation_source=cache result=success` без нового NIM-вызова.
+и проверьте `recommendation_source=openai result=success` в логе. Повторите тот же
+запрос: ожидается `recommendation_source=cache result=success` без нового OpenAI-вызова.
 
 ## Тесты
 

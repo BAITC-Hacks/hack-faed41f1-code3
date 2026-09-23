@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import json
 from copy import deepcopy
+from types import SimpleNamespace
 from typing import Any
 
-import httpx
 import pytest
+from openai import APIConnectionError, APITimeoutError, OpenAIError
 
 from app.core.config import settings
 from app.services import ai_recommender
+from app.services.ai_recommender import AIRanking
 from app.services.data_loader import DataStore
 from app.services.recommender import (
     deterministic_recommendations,
@@ -29,32 +31,46 @@ def employee(store: DataStore) -> dict[str, Any]:
 
 
 @pytest.fixture(autouse=True)
-def nvidia_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+def openai_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     ai_recommender._cache.clear()
-    monkeypatch.delenv("NVIDIA_API_KEY", raising=False)
-    monkeypatch.delenv("NVIDIA_MODEL", raising=False)
-    monkeypatch.delenv("NVIDIA_API_URL", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_MODEL", raising=False)
 
 
-def enable_nvidia(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("NVIDIA_API_KEY", "test-key")
-    monkeypatch.setenv("NVIDIA_MODEL", "test/model")
-    monkeypatch.setenv("NVIDIA_API_URL", "https://nim.test/v1/chat/completions")
+def enable_openai(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setenv("OPENAI_MODEL", "test-model")
 
 
-def client_with_response(mutate=None, calls: list[int] | None = None) -> httpx.Client:
-    def handler(request: httpx.Request) -> httpx.Response:
-        if calls is not None:
-            calls.append(1)
-        body = json.loads(request.content)
-        candidates = json.loads(body["messages"][1]["content"])["candidates"]
-        selected = []
-        for candidate in reversed(candidates[:3]):
-            selected.append({"eventId": candidate["eventId"], "reasonIds": [item["id"] for item in candidate["evidence"][:3]]})
-        if mutate:
-            mutate(selected)
-        return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps({"recommendations": selected})}}]})
-    return httpx.Client(transport=httpx.MockTransport(handler))
+class FakeResponses:
+    def __init__(self, mutate=None, calls: list[dict[str, Any]] | None = None, error=None) -> None:
+        self.mutate = mutate
+        self.calls = calls
+        self.error = error
+
+    def parse(self, **kwargs: Any) -> SimpleNamespace:
+        if self.calls is not None:
+            self.calls.append(kwargs)
+        if self.error is not None:
+            raise self.error
+        candidates = json.loads(kwargs["input"])["candidates"]
+        selected = [
+            {
+                "eventId": candidate["eventId"],
+                "reasonIds": [item["id"] for item in candidate["evidence"][:3]],
+            }
+            for candidate in reversed(candidates[:3])
+        ]
+        if self.mutate:
+            self.mutate(selected)
+        return SimpleNamespace(
+            output_parsed=AIRanking.model_validate({"recommendations": selected})
+        )
+
+
+class FakeOpenAI:
+    def __init__(self, mutate=None, calls: list[dict[str, Any]] | None = None, error=None) -> None:
+        self.responses = FakeResponses(mutate=mutate, calls=calls, error=error)
 
 
 def test_deterministic_ranking_is_stable_and_limited(store: DataStore, employee: dict[str, Any]) -> None:
@@ -100,15 +116,19 @@ def test_local_engine_returns_explainable_recommendations_for_real_employees(
     assert result == deterministic_recommendations(store, employee)
 
 
-def test_successful_nvidia_response_reranks_and_keeps_public_shape(
+def test_successful_openai_response_uses_responses_api_and_keeps_public_shape(
     monkeypatch: pytest.MonkeyPatch, store: DataStore, employee: dict[str, Any]
 ) -> None:
-    enable_nvidia(monkeypatch)
-    with client_with_response() as client:
-        result = recommendations(store, employee, ai_client=client)
+    enable_openai(monkeypatch)
+    calls: list[dict[str, Any]] = []
+    result = recommendations(store, employee, ai_client=FakeOpenAI(calls=calls))  # type: ignore[arg-type]
     assert len(result) == 3
     assert all("evidence" not in item and "source" not in item for item in result)
     assert all(len(item["factors"]) >= 3 for item in result)
+    assert len(calls) == 1
+    assert calls[0]["model"] == "test-model"
+    assert calls[0]["text_format"] is AIRanking
+    assert len(json.loads(calls[0]["input"])["candidates"]) <= 8
 
 
 @pytest.mark.parametrize("mutation", [
@@ -118,33 +138,56 @@ def test_successful_nvidia_response_reranks_and_keeps_public_shape(
     lambda selected: selected[0].update(reasonIds=selected[0]["reasonIds"][:2]),
     lambda selected: selected[0].update(extra="forbidden"),
 ])
-def test_invalid_nvidia_response_uses_fallback(
+def test_invalid_openai_response_uses_fallback(
     monkeypatch: pytest.MonkeyPatch, store: DataStore, employee: dict[str, Any], mutation
 ) -> None:
-    enable_nvidia(monkeypatch)
+    enable_openai(monkeypatch)
     expected = deterministic_recommendations(store, employee)
-    with client_with_response(mutation) as client:
-        assert recommendations(store, employee, ai_client=client) == expected
+    client = FakeOpenAI(mutate=mutation)
+    assert recommendations(store, employee, ai_client=client) == expected  # type: ignore[arg-type]
 
 
-def test_http_401_has_no_retry_and_uses_fallback(
+def test_openai_error_uses_deterministic_fallback(
     monkeypatch: pytest.MonkeyPatch, store: DataStore, employee: dict[str, Any]
 ) -> None:
-    enable_nvidia(monkeypatch)
-    calls: list[int] = []
-    client = httpx.Client(transport=httpx.MockTransport(lambda _request: (calls.append(1), httpx.Response(401))[1]))
-    with client:
-        assert recommendations(store, employee, ai_client=client) == deterministic_recommendations(store, employee)
+    enable_openai(monkeypatch)
+    client = FakeOpenAI(error=OpenAIError("timeout"))
+    assert recommendations(store, employee, ai_client=client) == deterministic_recommendations(  # type: ignore[arg-type]
+        store, employee
+    )
+
+
+def test_openai_timeout_does_not_retry_and_uses_fallback(
+    monkeypatch: pytest.MonkeyPatch, store: DataStore, employee: dict[str, Any]
+) -> None:
+    enable_openai(monkeypatch)
+    calls: list[dict[str, Any]] = []
+    client = FakeOpenAI(calls=calls, error=APITimeoutError(request=object()))  # type: ignore[arg-type]
+    assert recommendations(store, employee, ai_client=client) == deterministic_recommendations(  # type: ignore[arg-type]
+        store, employee
+    )
     assert len(calls) == 1
 
 
-def test_repeated_request_uses_nvidia_cache(
+def test_openai_network_error_retries_once_then_uses_fallback(
     monkeypatch: pytest.MonkeyPatch, store: DataStore, employee: dict[str, Any]
 ) -> None:
-    enable_nvidia(monkeypatch)
-    calls: list[int] = []
-    with client_with_response(calls=calls) as client:
-        first = recommendations(store, employee, ai_client=client)
-        second = recommendations(store, employee, ai_client=client)
+    enable_openai(monkeypatch)
+    calls: list[dict[str, Any]] = []
+    client = FakeOpenAI(calls=calls, error=APIConnectionError(request=object()))  # type: ignore[arg-type]
+    assert recommendations(store, employee, ai_client=client) == deterministic_recommendations(  # type: ignore[arg-type]
+        store, employee
+    )
+    assert len(calls) == 2
+
+
+def test_repeated_request_uses_openai_cache(
+    monkeypatch: pytest.MonkeyPatch, store: DataStore, employee: dict[str, Any]
+) -> None:
+    enable_openai(monkeypatch)
+    calls: list[dict[str, Any]] = []
+    client = FakeOpenAI(calls=calls)
+    first = recommendations(store, employee, ai_client=client)  # type: ignore[arg-type]
+    second = recommendations(store, employee, ai_client=client)  # type: ignore[arg-type]
     assert first == second
     assert len(calls) == 1
