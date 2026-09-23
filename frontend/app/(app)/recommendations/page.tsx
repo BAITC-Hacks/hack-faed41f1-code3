@@ -13,7 +13,7 @@ import { ApiError } from "@/lib/types"
 import type { Recommendation } from "@/lib/types"
 
 export default function RecommendationsPage() {
-  const { selectedEmployee, isLoading: isEmployeesLoading, error: employeesError, retry: retryEmployees } =
+  const { selectedEmployee, isLoading: isEmployeesLoading, error: employeesError, retry: retryEmployees, refreshSelectedEmployee } =
     useEmployeeContext()
 
   const [recommendations, setRecommendations] = useState<Recommendation[]>([])
@@ -45,10 +45,10 @@ export default function RecommendationsPage() {
     }
   }, [selectedEmployee, attempt])
 
-  function handleCompleted(recommendationId: string) {
+  async function handleCompleted(recommendationId: string) {
     const completed = recommendations.find((r) => r.id === recommendationId)
+    await refreshSelectedEmployee()
     setJustCompletedTitle(completed?.title ?? null)
-    setRecommendations((prev) => prev.filter((r) => r.id !== recommendationId))
   }
 
   if (employeesError) {
@@ -106,6 +106,16 @@ export default function RecommendationsPage() {
             </Button>
           </AlertDescription>
         </Alert>
+      ) : !selectedEmployee ? (
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <AlertCircle />
+            </EmptyMedia>
+            <EmptyTitle>Сотрудники не найдены</EmptyTitle>
+            <EmptyDescription>Career Quest API не вернул доступных сотрудников.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : recommendations.length === 0 ? (
         <Empty>
           <EmptyHeader>

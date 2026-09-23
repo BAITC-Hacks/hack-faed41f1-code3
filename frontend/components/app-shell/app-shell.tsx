@@ -16,7 +16,7 @@ const NAV_ITEMS = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const { employees, selectedEmployeeId, setSelectedEmployeeId, isLoading } = useEmployeeContext()
+  const { employees, selectedEmployeeId, selectEmployee, isLoading } = useEmployeeContext()
   const showEmployeeSwitcher = pathname !== "/hr-dashboard"
 
   return (
@@ -62,7 +62,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Select
                 value={selectedEmployeeId ?? undefined}
                 onValueChange={(value) => {
-                  if (value) setSelectedEmployeeId(value)
+                  if (value) selectEmployee(value)
                 }}
               >
                 <SelectTrigger className="w-56" aria-label="Выбор сотрудника">

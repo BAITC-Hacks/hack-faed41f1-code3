@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react"
-import { getEmployees } from "@/lib/api"
+import { getEmployee, getEmployeeActivities, getEmployeeTrajectory, getEmployees, getRecommendations } from "@/lib/api"
 import type { ApiError } from "@/lib/types"
 import type { Employee } from "@/lib/types"
 
@@ -9,7 +9,8 @@ interface EmployeeContextValue {
   employees: Employee[]
   selectedEmployeeId: string | null
   selectedEmployee: Employee | null
-  setSelectedEmployeeId: (id: string) => void
+  selectEmployee: (id: string) => void
+  refreshSelectedEmployee: () => Promise<void>
   isLoading: boolean
   error: ApiError | null
   retry: () => void
@@ -33,7 +34,7 @@ export function EmployeeProvider({ children }: { children: React.ReactNode }) {
       .then((data) => {
         if (!isMounted) return
         setEmployees(data)
-        setSelectedEmployeeId((current) => current ?? data[0]?.id ?? null)
+        setSelectedEmployeeId((current) => data.find((employee) => employee.id === current)?.id ?? data[0]?.id ?? null)
       })
       .catch((err: ApiError) => {
         if (isMounted) setError(err)
@@ -48,6 +49,19 @@ export function EmployeeProvider({ children }: { children: React.ReactNode }) {
   }, [attempt])
 
   const retry = useCallback(() => setAttempt((n) => n + 1), [])
+  const selectEmployee = useCallback((id: string) => setSelectedEmployeeId(id), [])
+
+  const refreshSelectedEmployee = useCallback(async () => {
+    if (!selectedEmployeeId) return
+
+    const [employee] = await Promise.all([
+      getEmployee(selectedEmployeeId),
+      getEmployeeActivities(selectedEmployeeId),
+      getEmployeeTrajectory(selectedEmployeeId),
+      getRecommendations(selectedEmployeeId),
+    ])
+    setEmployees((current) => current.map((item) => (item.id === employee.id ? employee : item)))
+  }, [selectedEmployeeId])
 
   const selectedEmployee = employees.find((employee) => employee.id === selectedEmployeeId) ?? null
 
@@ -57,7 +71,8 @@ export function EmployeeProvider({ children }: { children: React.ReactNode }) {
         employees,
         selectedEmployeeId,
         selectedEmployee,
-        setSelectedEmployeeId,
+        selectEmployee,
+        refreshSelectedEmployee,
         isLoading,
         error,
         retry,

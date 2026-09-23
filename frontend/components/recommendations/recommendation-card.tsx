@@ -30,7 +30,7 @@ export function RecommendationCard({
 }: {
   recommendation: Recommendation
   employeeId: string
-  onCompleted: (recommendationId: string) => void
+  onCompleted: (recommendationId: string) => void | Promise<void>
 }) {
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<ApiError | null>(null)
@@ -47,7 +47,7 @@ export function RecommendationCard({
         format: recommendation.format,
         durationHours: recommendation.durationHours,
       })
-      onCompleted(recommendation.id)
+      await onCompleted(recommendation.id)
     } catch (err) {
       setError(err instanceof ApiError ? err : new ApiError("Не удалось завершить мероприятие."))
     } finally {

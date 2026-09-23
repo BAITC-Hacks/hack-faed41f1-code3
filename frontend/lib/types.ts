@@ -1,7 +1,5 @@
 // Shared domain types for Career Quest.
-// These describe the exact shape the real backend is expected to return.
-// Do not add fields here speculatively — the mock data and API client must
-// stay in sync with what the backend contract actually defines.
+// These describe the exact shape returned by the Career Quest API.
 
 export type SkillCategory = "hard" | "soft" | "leadership" | "digital"
 

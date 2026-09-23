@@ -63,6 +63,16 @@ export default function ProfilePage() {
   }
 
   if (isEmployeesLoading || !selectedEmployee) {
+    if (!isEmployeesLoading) {
+      return (
+        <div className="flex h-full items-center justify-center p-6">
+          <Alert className="max-w-md">
+            <AlertTitle>Сотрудники не найдены</AlertTitle>
+            <AlertDescription>Career Quest API не вернул доступных сотрудников.</AlertDescription>
+          </Alert>
+        </div>
+      )
+    }
     return (
       <div className="grid h-full grid-cols-1 gap-4 p-6 lg:grid-cols-[380px_1fr_420px]">
         <Skeleton className="h-full" />
