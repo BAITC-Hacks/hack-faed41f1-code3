@@ -3,7 +3,10 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any
 
+import httpx
+
 from app.services.data_loader import DataStore
+from app.services.ai_recommender import AICandidate, rerank_with_nvidia
 from app.services.trajectory import effective_skills, target_profile
 
 
@@ -66,7 +69,7 @@ def _history_fit(store: DataStore, employee_id: str, event: dict[str, Any]) -> t
     return max(0.0, min(1.0, score)), summary
 
 
-def _candidate(store: DataStore, employee: dict[str, Any], event: dict[str, Any]) -> dict[str, Any]:
+def _candidate(store: DataStore, employee: dict[str, Any], event: dict[str, Any]) -> AICandidate:
     levels = effective_skills(store, employee)
     profile = target_profile(store, employee)
     requirements = profile["required_skills"]
@@ -105,6 +108,7 @@ def _candidate(store: DataStore, employee: dict[str, Any], event: dict[str, Any]
     expected = min(current + float(primary["gain"]), float(primary["max_level"]))
     sessions = sorted(session for session in event["upcoming_sessions"] if session >= store.as_of_date.isoformat())
     start_date = sessions[0] if sessions else store.as_of_date.isoformat()
+    score = max(0, min(100, round(raw_score * 100)))
     factors = [
         {
             "label": "Разрыв навыка",
@@ -120,13 +124,13 @@ def _candidate(store: DataStore, employee: dict[str, Any], event: dict[str, Any]
             "detail": f"Формат {event['format']}, нагрузка {event['duration_hours']:g} ч, prerequisites выполнены.",
         },
     ]
-    return {
+    response = {
         "id": f"rec-{employee['employee_id']}-{event['event_id']}",
         "employeeId": employee["employee_id"],
         "activityId": event["event_id"],
         "title": event["title"],
         "description": event["description"],
-        "score": max(0, min(100, round(raw_score * 100))),
+        "score": score,
         "factors": factors,
         "skillLevels": {
             "skillName": store.skills[skill_id]["name"],
@@ -139,13 +143,116 @@ def _candidate(store: DataStore, employee: dict[str, Any], event: dict[str, Any]
         "startDate": start_date,
     }
 
+    fact_templates = {
+        "skill_gap": {"factor": "skill_gap", "label": factors[0]["label"], "fact": factors[0]["detail"]},
+        "career_target": {
+            "factor": "career_target",
+            "label": factors[1]["label"],
+            "fact": factors[1]["detail"],
+        },
+        "history_fit": {
+            "factor": "history_fit",
+            "label": factors[2]["label"],
+            "fact": factors[2]["detail"],
+        },
+        "availability": {
+            "factor": "availability",
+            "label": factors[3]["label"],
+            "fact": factors[3]["detail"],
+        },
+    }
+    if skill_id in critical:
+        fact_templates["critical_skill"] = {
+            "factor": "critical_skill",
+            "label": "Критичный навык",
+            "fact": (
+                f"{store.skills[skill_id]['name']} — критичный навык цели; "
+                f"текущий уровень {current:g}, требуется {required:g}."
+            ),
+        }
 
-def recommendations(store: DataStore, employee: dict[str, Any]) -> list[dict[str, Any]]:
+    skill_impacts = []
+    for reduction, effect in reductions:
+        affected_skill_id = effect["skill_id"]
+        before = levels.get(affected_skill_id, 0)
+        after = min(before + float(effect["gain"]), float(effect["max_level"]))
+        skill_impacts.append(
+            {
+                "skill_id": affected_skill_id,
+                "skill_name": store.skills[affected_skill_id]["name"],
+                "before": before,
+                "required": requirements[affected_skill_id],
+                "after": after,
+                "gain": float(effect["gain"]),
+                "max_level": float(effect["max_level"]),
+                "gap_reduction": reduction,
+            }
+        )
+    critical_gaps = [
+        {
+            "skill_id": critical_skill_id,
+            "skill_name": store.skills[critical_skill_id]["name"],
+            "before": levels.get(critical_skill_id, 0),
+            "required": requirements[critical_skill_id],
+            "gap": gaps[critical_skill_id],
+        }
+        for critical_skill_id in sorted(critical)
+        if gaps.get(critical_skill_id, 0) > 0
+    ]
+    context = {
+        "event_id": event["event_id"],
+        "title": event["title"],
+        "type": event["type"],
+        "format": event["format"],
+        "duration_hours": event["duration_hours"],
+        "deterministic_score": score,
+        "score_breakdown": {
+            "gap_reduction": round(40 * gap_reduction, 2),
+            "critical_skill": round(20 * critical_score, 2),
+            "career_goal": round(15 * career_score, 2),
+            "history_fit": round(15 * history_score, 2),
+            "feasibility": round(10 * feasibility, 2),
+        },
+        "skills": skill_impacts,
+        "critical_gaps": critical_gaps,
+        "history_fit_summary": history_summary,
+        "career_target": {"role": profile["role"], "grade": profile["grade"]},
+        "availability": {
+            "available": available,
+            "next_session": sessions[0] if sessions else None,
+            "self_paced": event["format"] == "self_paced",
+        },
+    }
+    return AICandidate(response=response, context=context, fact_templates=fact_templates)
+
+
+def _ranked_candidates(store: DataStore, employee: dict[str, Any]) -> list[AICandidate]:
     levels = effective_skills(store, employee)
     candidates = [
         _candidate(store, employee, event)
         for event in store.events.values()
         if is_eligible(store, employee, event, levels)
     ]
-    candidates.sort(key=lambda item: (-item["score"], item["activityId"]))
-    return candidates[:3]
+    candidates.sort(key=lambda item: (-item.response["score"], item.response["activityId"]))
+    return candidates
+
+
+def deterministic_recommendations(
+    store: DataStore,
+    employee: dict[str, Any],
+    *,
+    limit: int = 3,
+) -> list[dict[str, Any]]:
+    return [candidate.response for candidate in _ranked_candidates(store, employee)[:limit]]
+
+
+def recommendations(
+    store: DataStore,
+    employee: dict[str, Any],
+    *,
+    ai_client: httpx.Client | None = None,
+) -> list[dict[str, Any]]:
+    candidates = _ranked_candidates(store, employee)[:8]
+    fallback = [candidate.response for candidate in candidates[:3]]
+    ai_result = rerank_with_nvidia(candidates, client=ai_client)
+    return ai_result if ai_result is not None else fallback

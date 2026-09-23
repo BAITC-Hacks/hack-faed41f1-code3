@@ -5,7 +5,7 @@ from datetime import date
 from typing import Any
 
 from app.services.data_loader import DataStore
-from app.services.recommender import recommendations
+from app.services.recommender import deterministic_recommendations
 from app.services.trajectory import effective_skills, target_profile
 
 
@@ -18,7 +18,7 @@ def hr_dashboard(store: DataStore) -> dict[str, Any]:
         for skill_id, required in profile["required_skills"].items():
             if levels.get(skill_id, 0) < required:
                 gap_counts[skill_id] += 1
-        if not recommendations(store, employee):
+        if not deterministic_recommendations(store, employee):
             employee_history = [
                 row for row in store.all_history() if row["employee_id"] == employee["employee_id"]
             ]
