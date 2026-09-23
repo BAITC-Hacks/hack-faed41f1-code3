@@ -3,6 +3,7 @@ import type {
   ActivityFormat,
   ActivityHistoryEntry,
   Employee,
+  EmployeeTrajectory,
   HRDashboardData,
   ImportResult,
   Recommendation,
@@ -72,8 +73,8 @@ export function getEmployeeActivities(employeeId: string): Promise<ActivityHisto
   return request<ActivityHistoryEntry[]>(`/employees/${employeeId}/activities`)
 }
 
-export function getEmployeeTrajectory(employeeId: string): Promise<unknown> {
-  return request<unknown>(`/employees/${employeeId}/trajectory`)
+export function getEmployeeTrajectory(employeeId: string): Promise<EmployeeTrajectory> {
+  return request<EmployeeTrajectory>(`/employees/${employeeId}/trajectory`)
 }
 
 export function getRecommendations(employeeId: string): Promise<Recommendation[]> {

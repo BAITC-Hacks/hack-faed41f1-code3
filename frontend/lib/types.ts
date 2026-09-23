@@ -44,6 +44,26 @@ export interface Employee {
   skills: Skill[]
 }
 
+export interface TrajectorySkill {
+  skillId: string
+  skillName: string
+  currentLevel: number
+  requiredLevel: number
+  gap: number
+  critical: boolean
+}
+
+export interface EmployeeTrajectory {
+  employeeId: string
+  currentRole: string
+  currentGrade: string
+  targetRole: string
+  targetGrade: string
+  asOfDate: string // ISO date
+  progressPercentage: number // 0-100
+  skills: TrajectorySkill[]
+}
+
 export interface RecommendationFactor {
   label: string
   detail: string
