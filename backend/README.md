@@ -25,21 +25,33 @@ py -3.12 -m venv .venv
 
 Для подключения frontend задайте ему `NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/api`.
 
-## NVIDIA NIM
+## Explainable hybrid recommendation engine
 
-AI-переранжирование рекомендаций настраивается только через переменные окружения
-backend (см. `.env.example`):
+Rule-based scoring — основа решения: он локально отбирает и ранжирует top 8 по
+effective skills, skill gaps, critical skills, career goal, prerequisites,
+доступности, истории участия и `gain`/`max_level`. Каждая рекомендация содержит
+подтверждённые объяснимые факторы. NVIDIA NIM — только необязательное расширение,
+которое может выбрать порядок deterministic top 3. Eligibility, score, gaps, evidence и все
+тексты факторов рассчитывает только backend. В NIM передаются только event ID,
+название, score и подтверждённые evidence ID/facts — без профиля сотрудника,
+истории, персональных данных и ключа. Ответ проходит строгую Pydantic-валидацию;
+LLM не может создать событие или факт.
 
-- `NVIDIA_API_KEY` — секретный ключ; при отсутствии NVIDIA не вызывается;
-- `NVIDIA_MODEL` — идентификатор hosted NIM модели;
-- `NVIDIA_BASE_URL` — необязательный URL, по умолчанию
-  `https://integrate.api.nvidia.com/v1`.
+Создайте `backend/.env` по шаблону `.env.example` и укажите ключ NVIDIA. Значения
+операционной системы имеют приоритет. При отсутствии ключа, timeout, сетевой/HTTP
+ошибке или невалидном ответе используется deterministic top 3. Успешные ответы
+кэшируются в памяти по сотруднику, модели и fingerprint top-8; повторный запрос
+даёт безопасный лог `recommendation_source=cache result=success`.
 
-Backend передаёт модели только восемь лучших допустимых кандидатов без персональных
-данных. Общий лимит ожидания AI — 8 секунд; повтор выполняется один раз только при
-сетевой ошибке или timeout. При любой ошибке, неверном JSON или неподтверждённых
-фактах API возвращает прежние три deterministic-рекомендации. API-ключ никогда не
-передаётся во frontend или API response.
+Ручная проверка (не запускайте без ключа):
+
+```powershell
+.\.venv\Scripts\python.exe scripts/check_nvidia.py
+```
+
+После успешной проверки запустите backend, вызовите recommendations для сотрудника
+и проверьте `recommendation_source=nvidia result=success` в логе. Повторите тот же
+запрос: ожидается `recommendation_source=cache result=success` без нового NIM-вызова.
 
 ## Тесты
 
