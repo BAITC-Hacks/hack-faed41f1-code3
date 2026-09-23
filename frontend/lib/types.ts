@@ -106,9 +106,12 @@ export interface EmployeeWithoutRecommendation {
 export interface ActivityStatusBreakdown {
   completed: number
   dropout: number
+  dropped: number
+  declined: number
   noShow: number
   inProgress: number
   planned: number
+  overdue: number
 }
 
 export interface ActivityParticipation {

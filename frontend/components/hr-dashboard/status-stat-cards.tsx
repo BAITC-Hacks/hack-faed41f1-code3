@@ -1,11 +1,17 @@
-import { CheckCircle2, Clock3, UserX, XCircle } from "lucide-react"
+import { AlarmClock, Ban, CheckCircle2, Clock3, UserX, XCircle } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import type { ActivityStatusBreakdown } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
 export function StatusStatCards({ statusBreakdown }: { statusBreakdown: ActivityStatusBreakdown }) {
   const total =
-    statusBreakdown.completed + statusBreakdown.dropout + statusBreakdown.noShow + statusBreakdown.inProgress
+    statusBreakdown.completed +
+    statusBreakdown.dropped +
+    statusBreakdown.declined +
+    statusBreakdown.noShow +
+    statusBreakdown.inProgress +
+    statusBreakdown.overdue +
+    statusBreakdown.planned
 
   const stats = [
     {
@@ -15,13 +21,19 @@ export function StatusStatCards({ statusBreakdown }: { statusBreakdown: Activity
       tone: "text-primary",
     },
     {
-      label: "Не завершено",
-      value: statusBreakdown.dropout,
+      label: "Dropped",
+      value: statusBreakdown.dropped,
       icon: XCircle,
       tone: "text-destructive",
     },
     {
-      label: "Не явился",
+      label: "Declined",
+      value: statusBreakdown.declined,
+      icon: Ban,
+      tone: "text-destructive",
+    },
+    {
+      label: "No-show",
       value: statusBreakdown.noShow,
       icon: UserX,
       tone: "text-destructive",
@@ -32,10 +44,16 @@ export function StatusStatCards({ statusBreakdown }: { statusBreakdown: Activity
       icon: Clock3,
       tone: "text-muted-foreground",
     },
+    {
+      label: "Просрочено",
+      value: statusBreakdown.overdue,
+      icon: AlarmClock,
+      tone: "text-muted-foreground",
+    },
   ]
 
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
       {stats.map((stat) => {
         const Icon = stat.icon
         const share = total > 0 ? Math.round((stat.value / total) * 100) : 0
@@ -48,7 +66,7 @@ export function StatusStatCards({ statusBreakdown }: { statusBreakdown: Activity
               <div className="flex flex-col">
                 <span className="text-xl font-semibold tabular-nums text-foreground">{stat.value}</span>
                 <span className="text-xs text-muted-foreground">
-                  {stat.label} · {share}%
+                  {stat.label} · {share}% записей
                 </span>
               </div>
             </CardContent>
