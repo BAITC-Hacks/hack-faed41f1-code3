@@ -8,26 +8,10 @@ from threading import Lock
 from time import monotonic
 from typing import Any, Literal
 
+from openai import APIConnectionError, APITimeoutError, OpenAI, OpenAIError
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from app.core.config import settings
-
-try:
-    from openai import APIConnectionError, APITimeoutError, OpenAI, OpenAIError
-    OPENAI_AVAILABLE = True
-except ImportError:  # Optional LLM enhancement must never prevent local ranking.
-    OpenAI = Any
-
-    class OpenAIError(Exception):
-        pass
-
-    class APIConnectionError(OpenAIError):
-        pass
-
-    class APITimeoutError(OpenAIError):
-        pass
-
-    OPENAI_AVAILABLE = False
 
 
 MAX_CACHE_ENTRIES = 500
@@ -136,7 +120,7 @@ def rerank_with_openai(
     employee_id: str, candidates: list[AICandidate], *, client: OpenAI | None = None
 ) -> RerankOutcome:
     api_key, model = settings.openai_api_key, settings.openai_model
-    if not OPENAI_AVAILABLE or not api_key or not model:
+    if not api_key or not model:
         return RerankOutcome(None, "deterministic", "missing_configuration")
     if len(candidates) < 3:
         return RerankOutcome(None, "deterministic", "fewer_than_three_candidates")
