@@ -10,10 +10,17 @@ import { ParticipationCard } from "@/components/hr-dashboard/participation-card"
 import { SkillGapsCard } from "@/components/hr-dashboard/skill-gaps-card"
 import { StatusStatCards } from "@/components/hr-dashboard/status-stat-cards"
 import { getHRDashboard } from "@/lib/api"
+import { useEmployeeContext } from "@/lib/employee-context"
 import { ApiError } from "@/lib/types"
 import type { HRDashboardData } from "@/lib/types"
 
 export default function HrDashboardPage() {
+  const {
+    employees,
+    isLoading: isEmployeesLoading,
+    error: employeesError,
+    retry: retryEmployees,
+  } = useEmployeeContext()
   const [data, setData] = useState<HRDashboardData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<ApiError | null>(null)
@@ -40,15 +47,23 @@ export default function HrDashboardPage() {
     }
   }, [attempt])
 
-  if (error) {
+  if (error || employeesError) {
     return (
       <div className="flex h-full items-center justify-center p-6">
         <Alert variant="destructive" className="max-w-md">
           <AlertCircle />
           <AlertTitle>Не удалось загрузить HR-панель</AlertTitle>
           <AlertDescription className="flex flex-col gap-3">
-            <span>{error.message}</span>
-            <Button size="sm" variant="outline" onClick={() => setAttempt((n) => n + 1)} className="w-fit">
+            <span>{(error ?? employeesError)?.message}</span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setAttempt((n) => n + 1)
+                retryEmployees()
+              }}
+              className="w-fit"
+            >
               <RotateCw data-icon="inline-start" />
               Повторить
             </Button>
@@ -58,7 +73,7 @@ export default function HrDashboardPage() {
     )
   }
 
-  if (isLoading || !data) {
+  if (isLoading || isEmployeesLoading || !data) {
     return (
       <div className="flex h-full flex-col gap-4 p-6">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -74,6 +89,18 @@ export default function HrDashboardPage() {
       </div>
     )
   }
+
+  const profilesById = new Map(employees.map((employee) => [employee.id, employee]))
+  const employeesWithoutRecommendation = data.employeesWithoutRecommendation.map((employee) => {
+    const profile = profilesById.get(employee.employeeId)
+    return {
+      ...employee,
+      targetGrade: profile?.grade.target ?? "Не определён",
+      openGapCount: profile
+        ? profile.skills.filter((skill) => skill.currentLevel < skill.requiredLevel).length
+        : null,
+    }
+  })
 
   return (
     <div className="flex h-full flex-col gap-4 overflow-y-auto p-6 lg:overflow-hidden">
@@ -94,7 +121,7 @@ export default function HrDashboardPage() {
       </div>
 
       <div className="min-h-0 lg:h-64">
-        <EmployeesWithoutRecommendationCard employees={data.employeesWithoutRecommendation} />
+        <EmployeesWithoutRecommendationCard employees={employeesWithoutRecommendation} />
       </div>
     </div>
   )
